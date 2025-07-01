@@ -5,28 +5,34 @@ const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const path = require("path");
 const dotenv = require("dotenv");
-const formRoutes = require("./routes/forms");
-const checkoutRoute = require("./routes/checkout"); // ✅ import checkout route
 
+// ✅ Load environment variables
 dotenv.config();
+
+const formRoutes = require("./routes/forms");
+const checkoutRoute = require("./routes/checkout");
+const productRoutes = require("./routes/products");
+const orderRoutes = require("./routes/orderRoutes"); // ✅ Use only ONE order route
+const offerRoutes = require("./routes/offers");
+const cartRoutes = require("./routes/cart");
 
 const app = express();
 
-// ✅ Middleware
+// ✅ Enable JSON body parsing
 app.use(express.json());
 
-// ✅ CORS (Allow frontend access with cookies/session)
+// ✅ CORS - Allow Netlify Frontend
 app.use(
   cors({
-    origin: "http://localhost:5173", // Your React frontend URL
+    origin: "https://newageversatilestudio.netlify.app", // 🔥 Use your frontend URL here
     credentials: true,
   })
 );
 
-// ✅ Express-session middleware
+// ✅ Session Management
 app.use(
   session({
-    secret: process.env.JWT_SECRET,
+    secret: process.env.JWT_SECRET || "defaultsecret",
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
@@ -40,20 +46,18 @@ app.use(
   })
 );
 
-// ✅ Serve uploaded image files
+// ✅ Static file hosting (images, etc.)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ✅ API Routes
+// ✅ Define routes
 app.use("/api/forms", formRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/offers", offerRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/checkout", checkoutRoute);
 
-app.use("/api/products", require("./routes/products"));
-app.use("/api/orders", require("./routes/orders"));
-app.use("/api/offers", require("./routes/offers"));
-app.use("/api/cart", require("./routes/cart"));
-app.use("/api/orders", require("./routes/orderRoutes"));
-app.use("/api/checkout", checkoutRoute); // ✅ route for invoice-based checkout
-
-// 🛠 Test Route
+// ✅ Root Test Route
 app.get("/", (req, res) => {
   res.send("✅ Yasir's Shop Backend is Running");
 });
