@@ -98,7 +98,7 @@ app.use("/api/checkout", checkoutRoute);
 
 // ✅ Root route
 app.get("/", (req, res) => {
-  res.send("✅ Yasir's Shop Backend is Running on Render");
+  res.send("✅ Yasir's Shop Backend is Running on Render new ageversatile.netlify.app");
 });
 
 // ✅ Fallback 404
