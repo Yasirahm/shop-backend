@@ -22,25 +22,13 @@ const cartRoutes = require("./routes/cart");
 const paymentRoute = require("./routes/payment");
 
 // ✅ CORS Configuration
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://newageversatilestudio.netlify.app",
-];
-
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: true, // ✅ Allow all origins (you can change this later)
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
 
 // Optional: fallback for manual CORS headers
 app.use((req, res, next) => {
