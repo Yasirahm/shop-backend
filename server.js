@@ -24,7 +24,7 @@ const paymentRoute = require("./routes/payment");
 // ✅ CORS Configuration
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://silly-centaur-b9ac25.netlify.app",
+  "https://newageversatilestudio.netlify.app",
 ];
 
 app.use(
