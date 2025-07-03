@@ -24,7 +24,7 @@ const paymentRoute = require("./routes/payment");
 // ✅ CORS Configuration
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://newageversatilestudio.netlify.app",
+  "https://newageversatilestudio2.netlify.app",
 ];
 
 app.use(
