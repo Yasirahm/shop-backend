@@ -10,10 +10,27 @@ router.post("/submit", async (req, res) => {
     const newSubmission = new FormSubmission({ formType, data });
     await newSubmission.save();
 
-    res.status(201).json({ message: "✅ Form saved successfully" });
+    const adminEmail = process.env.EMAIL_USER;
+    const userEmail = data.email;
+
+    const htmlContent = `
+      <h2>🛒 New Order Received</h2>
+      <p><strong>Name:</strong> ${data.name}</p>
+      <p><strong>Email:</strong> ${data.email}</p>
+      <p><strong>Contact:</strong> ${data.contact}</p>
+      <p><strong>Address:</strong> ${data.address}, ${data.district}, ${data.pincode}</p>
+      <p><strong>Landmark:</strong> ${data.landmark}</p>
+      ${data.razorpayPaymentId ? `<p><strong>Razorpay ID:</strong> ${data.razorpayPaymentId}</p>` : ""}
+      <p><strong>Payment Method:</strong> ${data.paymentMethod}</p>
+      <p><strong>Amount:</strong> ₹${data.amount}</p>
+    `;
+
+    await sendEmail([adminEmail, userEmail], `📦 Order Received - ${formType}`, htmlContent);
+
+    res.status(201).json({ message: "✅ Order saved and email sent!" });
   } catch (err) {
-    console.error("❌ Save error:", err);
-    res.status(500).json({ message: "❌ Failed to save form" });
+    console.error("❌ Error in form submission:", err);
+    res.status(500).json({ message: "❌ Failed to process order." });
   }
 });
 

@@ -9,15 +9,17 @@ const fs = require("fs");
 
 dotenv.config();
 
-// ✅ Routes
-const formRoutes = require("./routes/forms");
+const app = express();
+
+// ✅ Load routes
+const formRoutes = require("./routes/formRoutes"); // ✅ exact match with filename
+
 const checkoutRoute = require("./routes/checkout");
 const productRoutes = require("./routes/products");
 const orderRoutes = require("./routes/orderRoutes");
 const offerRoutes = require("./routes/offers");
 const cartRoutes = require("./routes/cart");
-
-const app = express();
+const paymentRoute = require("./routes/payment");
 
 // ✅ CORS Configuration
 const allowedOrigins = [
@@ -40,7 +42,7 @@ app.use(
   })
 );
 
-// ✅ Optional fallback for manual CORS headers (not strictly necessary)
+// Optional: fallback for manual CORS headers
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
@@ -55,10 +57,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ Enable JSON parsing
+// ✅ Middlewares
 app.use(express.json());
 
-// ✅ Sessions (Important for login/authenticated routes)
+// ✅ Session setup (MongoDB store)
 app.use(
   session({
     secret: process.env.JWT_SECRET || "defaultsecret",
@@ -70,47 +72,56 @@ app.use(
     }),
     cookie: {
       httpOnly: true,
-      secure: true, // ⚠️ required for production HTTPS
-      sameSite: "none", // ⚠️ required for Netlify + Render
-      maxAge: 1000 * 60 * 60 * 24 * 7,
+      secure: true, // Required in production with HTTPS
+      sameSite: "none", // Needed for Netlify-Render cross-domain cookies
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     },
   })
 );
 
-// ✅ Serve uploads directory
+// ✅ Serve static files
 const uploadsDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
 app.use("/uploads", express.static(uploadsDir));
 
-// ✅ Debug log
+// ✅ Logging incoming requests
 app.use((req, res, next) => {
   console.log(`🔍 ${req.method} ${req.url}`);
   next();
 });
 
-// ✅ Routes
+// ✅ API Routes
 app.use("/api/forms", formRoutes);
+app.use("/api/checkout", checkoutRoute);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/offers", offerRoutes);
 app.use("/api/cart", cartRoutes);
-app.use("/api/checkout", checkoutRoute);
+app.use("/api/payment", paymentRoute);
 
 // ✅ Root route
 app.get("/", (req, res) => {
-  res.send("✅ Yasir's Shop Backend is Running on Render new ageversatile.netlify.app");
+  res.send("✅ Yasir's Shop Backend is Running - NewAgeVersatile");
 });
 
-// ✅ Fallback 404
+
+// ✅ 404 fallback
 app.use((req, res) => {
   res.status(404).json({ error: "API route not found" });
 });
 
-// ✅ Connect to MongoDB and Start Server
+
+// ✅ Connect MongoDB and Start Server
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => {
     console.log("✅ MongoDB connected");
+
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
