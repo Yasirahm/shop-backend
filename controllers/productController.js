@@ -1,12 +1,13 @@
-const Product = require("../models/Product");
-
-// POST /api/products - Add product with file upload
 const createProduct = async (req, res) => {
   try {
     const { name, description, price, discount, stock } = req.body;
 
-    // Multer saves the file as req.file
-    const imagePath = req.file ? req.file.path : "";
+    if (!req.file) {
+      return res.status(400).json({ message: "Image is required" });
+    }
+
+    // ✅ Full image URL (use this in frontend)
+    const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
 
     const product = new Product({
       name,
@@ -14,7 +15,7 @@ const createProduct = async (req, res) => {
       price,
       discount,
       stock,
-      image: imagePath, // Save the file path
+      image: imageUrl, // ✅ full URL path
     });
 
     await product.save();

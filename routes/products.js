@@ -2,15 +2,30 @@ const express = require("express");
 const router = express.Router();
 const Product = require("../models/Product");
 const multer = require("multer");
-const path = require("path");
+const { v2: cloudinary } = require("cloudinary");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const dotenv = require("dotenv");
 
-// ✅ Multer Configuration for Image Upload
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+dotenv.config();
+
+// ✅ Cloudinary Configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-const upload = multer({ storage });
 
+// ✅ Multer + Cloudinary Storage
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "shop-products", // ✅ optional folder name in Cloudinary
+    allowed_formats: ["jpeg", "jpg", "png", "webp"],
+    transformation: [{ width: 800, height: 800, crop: "limit" }],
+  },
+});
+
+const upload = multer({ storage });
 
 // ✅ GET /api/products - Fetch all products
 router.get("/", async (req, res) => {
@@ -19,21 +34,20 @@ router.get("/", async (req, res) => {
     res.json(products);
   } catch (err) {
     console.error("❌ Failed to fetch products:", err.message);
-    res.status(500).json({ message: "Failed to fetch products" });
+    res.status(500).json({
+      message: "🚧 We're working on server issues. Please try again shortly.",
+    });
   }
 });
 
-
-// ✅ POST /api/products - Create new product with image upload
+// ✅ POST /api/products - Create new product with image upload to Cloudinary
 router.post("/", upload.single("image"), async (req, res) => {
   try {
     const { name, description, price, discount, stock } = req.body;
 
-    if (!req.file) {
-      return res.status(400).json({ message: "Image is required" });
+    if (!req.file || !req.file.path) {
+      return res.status(400).json({ message: "Image upload failed" });
     }
-
-    const imagePath = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
 
     const newProduct = new Product({
       name,
@@ -41,7 +55,7 @@ router.post("/", upload.single("image"), async (req, res) => {
       price,
       discount,
       stock,
-      image: imagePath,
+      image: req.file.path, // ✅ Cloudinary returns secure URL
     });
 
     await newProduct.save();

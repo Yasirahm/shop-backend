@@ -21,6 +21,7 @@ const offerRoutes = require("./routes/offers");
 const cartRoutes = require("./routes/cart");
 const paymentRoute = require("./routes/payment");
 
+
 // ✅ CORS Configuration
 app.use(
   cors({
@@ -56,10 +57,15 @@ app.use(
 
 // ✅ Serve static files
 const uploadsDir = path.join(__dirname, "uploads");
+
+// ✅ Creates the "uploads" folder if it doesn't exist
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
 }
+
+// ✅ Serves files from the "uploads" folder at the /uploads URL path
 app.use("/uploads", express.static(uploadsDir));
+
 
 // ✅ Logging incoming requests
 app.use((req, res, next) => {
@@ -75,6 +81,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/offers", offerRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/payment", paymentRoute);
+
 
 // ✅ Root route
 app.get("/", (req, res) => {
