@@ -1,55 +1,28 @@
-// paymentRoute.js
 const express = require("express");
 const Razorpay = require("razorpay");
-const crypto = require("crypto");
-
 const router = express.Router();
 
-// Ensure your environment variables are correctly set
-const { RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET } = process.env;
-
-if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
-  console.error("❌ Razorpay keys are missing in environment variables.");
-  process.exit(1);
-}
-
-const razorpayInstance = new Razorpay({
-  key_id: RAZORPAY_KEY_ID,
-  key_secret: RAZORPAY_KEY_SECRET,
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_SECRET,
 });
 
-// Route to create a Razorpay order
+// 🔁 Create Razorpay Order
 router.post("/create-order", async (req, res) => {
+  const { amount } = req.body;
+
   try {
-    const { amount } = req.body;
-
-    if (!amount || typeof amount !== "number") {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid amount. It must be a number in rupees.",
-      });
-    }
-
     const options = {
-      amount: amount * 100, // Convert to paise
+      amount: amount * 100, // in paise
       currency: "INR",
-      receipt: `receipt_order_${Date.now()}`,
+      receipt: `receipt_${Date.now()}`,
     };
 
-    const order = await razorpayInstance.orders.create(options);
-
-    return res.status(200).json({
-      success: true,
-      order,
-    });
-
+    const order = await razorpay.orders.create(options);
+    res.status(200).json({ orderId: order.id, amount: order.amount, currency: order.currency });
   } catch (err) {
-    console.error("Razorpay Order Creation Error:", err.message);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to create Razorpay order",
-      error: err.message,
-    });
+    console.error("❌ Razorpay error:", err);
+    res.status(500).json({ message: "Razorpay order creation failed" });
   }
 });
 
